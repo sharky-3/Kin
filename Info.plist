@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>LSUIElement</key>
+	<true/>
+	<key>NSContactsUsageDescription</key>
+	<string>Kin reads your contacts so you can add people to the menu bar.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Kin uses the camera when you take a photo for your profile picture.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Kin uses the microphone when you record a voice note.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Kin turns your voice note into text while you talk.</string>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>Kin uses Messages to send the messages you type to your people.</string>
+</dict>
+</plist>
