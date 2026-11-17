@@ -14,7 +14,7 @@ final class StatusBarController: NSObject {
     var onHoverChange: ((Int?) -> Void)?
 
     private var count: Int {
-        store.shown.count
+        store.targets.count - 1
     }
 
     var frame: NSRect? {

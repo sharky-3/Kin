@@ -14,6 +14,18 @@ enum FileSender {
         return true
     }
 
+    static func pickAndSend(to person: Person) {
+        let panel = NSOpenPanel()
+        panel.allowsMultipleSelection = true
+        panel.canChooseDirectories = false
+        panel.prompt = "AirDrop"
+        panel.message = "Choose files to send to \(person.name)"
+        panel.level = NSWindow.Level(rawValue: NSWindow.Level.statusBar.rawValue + 1)
+        NSApp.activate(ignoringOtherApps: true)
+        guard panel.runModal() == .OK else { return }
+        send(panel.urls, to: person)
+    }
+
     static func send(_ urls: [URL], to person: Person) {
         guard !urls.isEmpty else { return }
         let service: NSSharingService?

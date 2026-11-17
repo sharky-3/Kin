@@ -206,15 +206,25 @@ struct DropdownDivider: View {
 
 struct HoverLabel: View {
     let text: String
+    var nearby = false
 
     var body: some View {
-        Text(text)
-            .font(.system(size: 12, weight: .semibold))
-            .lineLimit(1)
-            .padding(.horizontal, 11)
-            .padding(.vertical, 5)
-            .fixedSize()
-            .glassPanel(cornerRadius: 13)
+        HStack(spacing: 6) {
+            if nearby {
+                Circle()
+                    .fill(.green)
+                    .frame(width: 7, height: 7)
+                    .shadow(color: .green.opacity(0.8), radius: 3)
+            }
+            Text(text)
+                .font(.system(size: 12, weight: .semibold))
+                .lineLimit(1)
+        }
+        .padding(.leading, nearby ? 9 : 11)
+        .padding(.trailing, 11)
+        .padding(.vertical, 5)
+        .fixedSize()
+        .glassPanel(cornerRadius: 13)
     }
 }
 

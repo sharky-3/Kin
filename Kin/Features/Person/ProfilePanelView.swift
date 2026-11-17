@@ -18,6 +18,14 @@ struct ProfilePanelView: View {
         Binding(get: { store.me.name }, set: { value in store.updateMe { $0.name = value } })
     }
 
+    private var airdropEnabled: Binding<Bool> {
+        Binding(get: { store.airdropEnabled }, set: { store.setAirDropEnabled($0) })
+    }
+
+    private var showGuests: Binding<Bool> {
+        Binding(get: { store.showGuests }, set: { store.setShowGuests($0) })
+    }
+
     private var dropEnabled: Binding<Bool> {
         Binding(get: { store.dropEnabled }, set: { store.setDropEnabled($0) })
     }
@@ -32,6 +40,8 @@ struct ProfilePanelView: View {
                     .pillField()
                 Caption(text: "Your initials become the eyes of your face.")
             }
+            SettingRow(title: "AirDrop dot", caption: store.airdropAvailable ? "Green dot by people you can AirDrop to right now. Experimental." : "This Mac doesn't let Kin see AirDrop.", trailing: Toggle("", isOn: airdropEnabled).labelsHidden().toggleStyle(.switch).disabled(!store.airdropAvailable))
+            SettingRow(title: "Nearby people", caption: "Add up to 3 random people near you who have AirDrop on to your menu bar.", trailing: Toggle("", isOn: showGuests).labelsHidden().toggleStyle(.switch).disabled(!store.airdropAvailable || !store.airdropEnabled))
             SettingRow(title: "Drop files on people", caption: "Drag a file toward the menu bar and let go over someone to send it.", trailing: Toggle("", isOn: dropEnabled).labelsHidden().toggleStyle(.switch))
             SettingRow(title: "Open at login", caption: "Keep your people in the menu bar every time you start your Mac.", trailing: Toggle("", isOn: $launchAtLogin).labelsHidden().toggleStyle(.switch))
         }

@@ -34,6 +34,7 @@ nonisolated struct Person: Identifiable, Codable, Hashable, Sendable {
     var hue = Double.random(in: 0...1)
     var dropAction = DropAction.airdrop
     var isShown = true
+    var isGuest = false
 
     var firstName: String {
         name.split(separator: " ").first.map(String.init) ?? name
@@ -86,5 +87,6 @@ extension Person {
         hue = try container.decodeIfPresent(Double.self, forKey: .hue) ?? Double.random(in: 0...1)
         dropAction = try container.decodeIfPresent(DropAction.self, forKey: .dropAction) ?? .airdrop
         isShown = try container.decodeIfPresent(Bool.self, forKey: .isShown) ?? true
+        isGuest = false
     }
 }

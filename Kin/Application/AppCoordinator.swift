@@ -8,6 +8,8 @@ final class AppCoordinator {
     private let panel = PersonPanelController()
     private let chat = ChatStore()
     private let label = HoverLabelController()
+    private let airdrop = AirDropNearby()
+    private var hoveredSlot: Int?
     private let settingsID = UUID()
     private var statusBar: StatusBarController?
     private var dropPanel: DropPanelController?
@@ -29,7 +31,20 @@ final class AppCoordinator {
             })
         }
 
-        store.onChange = { [weak self] in self?.statusBar?.refresh() }
+        store.onChange = { [weak self] in
+            guard let self else { return }
+            self.statusBar?.refresh()
+            self.airdrop.setActive(self.store.airdropEnabled)
+        }
+        airdrop.onChange = { [weak self] in
+            guard let self else { return }
+            self.store.setGuests(self.airdrop.guests(excluding: self.store.people))
+            if let slot = self.hoveredSlot {
+                self.showLabel(for: slot)
+            }
+        }
+        store.airdropAvailable = airdrop.isAvailable
+        airdrop.setActive(store.airdropEnabled)
 
         dragMonitor.onMove = { [weak self] point in self?.dragMoved(to: point) }
         dragMonitor.onEnd = { [weak self] in
@@ -74,6 +89,12 @@ final class AppCoordinator {
     private func togglePanel(at slot: Int) {
         guard let frame = statusBar?.frame, let anchorX = statusBar?.anchorX(for: slot), store.targets.indices.contains(slot) else { return }
         let person = store.targets[slot]
+        if person.isGuest {
+            label.hide()
+            panel.close()
+            FileSender.pickAndSend(to: person)
+            return
+        }
         let close: () -> Void = { [weak self] in self?.panel.close() }
         let view: AnyView
         if slot == 0 {
@@ -103,12 +124,15 @@ final class AppCoordinator {
     }
 
     private func showLabel(for slot: Int?) {
+        hoveredSlot = slot
         guard let slot, !panel.isOpen, !dropState.isActive, store.targets.indices.contains(slot), let frame = statusBar?.frame, let x = statusBar?.anchorX(for: slot) else {
             label.hide()
             return
         }
         let person = store.targets[slot]
-        label.show(slot == 0 ? "You" : person.firstName, centerX: x, top: frame.minY)
+        let near = slot > 0 && store.airdropEnabled && (person.isGuest || airdrop.isNearby(person))
+        let title = slot == 0 ? "You" : person.isGuest ? person.name : person.firstName
+        label.show(title, nearby: near, centerX: x, top: frame.minY)
     }
 
     private func hideDrop() {

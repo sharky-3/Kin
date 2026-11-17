@@ -9,11 +9,11 @@ final class HoverLabelController {
         panel.ignoresMouseEvents = true
     }
 
-    func show(_ text: String, centerX: CGFloat, top: CGFloat) {
-        let key = text + "\(Int(centerX))"
+    func show(_ text: String, nearby: Bool, centerX: CGFloat, top: CGFloat) {
+        let key = text + "\(Int(centerX))\(nearby)"
         guard current != key else { return }
         current = key
-        let host = NSHostingView(rootView: HoverLabel(text: text))
+        let host = NSHostingView(rootView: HoverLabel(text: text, nearby: nearby))
         let size = host.fittingSize
         host.sizingOptions = []
         panel.host(host)

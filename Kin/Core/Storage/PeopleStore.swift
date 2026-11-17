@@ -8,13 +8,17 @@ final class PeopleStore {
     private(set) var people: [Person] = []
     private(set) var me = Person(name: NSFullUserName(), hue: 0.14)
     private(set) var dropEnabled = true
+    private(set) var airdropEnabled = true
+    private(set) var showGuests = false
+    private(set) var guests: [Person] = []
+    var airdropAvailable = true
 
     var shown: [Person] {
         Array(people.filter { $0.isShown }.prefix(Self.limit))
     }
 
     var targets: [Person] {
-        [me] + shown
+        [me] + shown + (airdropEnabled && showGuests ? guests : [])
     }
 
     @ObservationIgnored var onChange: (() -> Void)?
@@ -28,6 +32,10 @@ final class PeopleStore {
         if let data = try? Data(contentsOf: profileURL), let saved = try? JSONDecoder().decode(Person.self, from: data) {
             me = saved
         }
+        if UserDefaults.standard.object(forKey: "airdropEnabled") != nil {
+            airdropEnabled = UserDefaults.standard.bool(forKey: "airdropEnabled")
+        }
+        showGuests = UserDefaults.standard.bool(forKey: "showGuests")
         if UserDefaults.standard.object(forKey: "dropEnabled") != nil {
             dropEnabled = UserDefaults.standard.bool(forKey: "dropEnabled")
         }
@@ -39,6 +47,24 @@ final class PeopleStore {
             try? FileManager.default.createDirectory(at: profileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
             try? data.write(to: profileURL, options: .atomic)
         }
+        onChange?()
+    }
+
+    func setAirDropEnabled(_ enabled: Bool) {
+        airdropEnabled = enabled
+        UserDefaults.standard.set(enabled, forKey: "airdropEnabled")
+        onChange?()
+    }
+
+    func setShowGuests(_ enabled: Bool) {
+        showGuests = enabled
+        UserDefaults.standard.set(enabled, forKey: "showGuests")
+        onChange?()
+    }
+
+    func setGuests(_ next: [Person]) {
+        guard next != guests else { return }
+        guests = next
         onChange?()
     }
 
