@@ -23,7 +23,7 @@ Kin puts the people you talk to most in your menu bar as small avatars. Click on
 ### 1. Install with Homebrew
 
 ```sh
-brew install --cask sharky-3/kin/kin
+brew install --cask sharky-3/tap/kin
 ```
 
 ### 2. Allow the app to open
