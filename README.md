@@ -1,6 +1,10 @@
-# Kin
+<p align="center">
+  <img src="Readme/AppIcon.png" width="128" alt="Kin icon">
+</p>
 
-Your favorite people, right in the macOS menu bar.
+<h1 align="center">Kin</h1>
+
+<p align="center">Your favorite people, right in the macOS menu bar.</p>
 
 Kin puts the people you talk to most in your menu bar as small avatars. Click one to send a quick message, record a voice note, or open a chat in your favorite app. Drag a file onto someone to send it to them right away.
 
