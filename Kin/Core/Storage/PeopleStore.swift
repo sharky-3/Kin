@@ -41,13 +41,26 @@ final class PeopleStore {
         }
     }
 
+    @ObservationIgnored private var pendingProfileSave: DispatchWorkItem?
+
     func updateMe(_ change: (inout Person) -> Void) {
+        let before = me
         change(&me)
-        if let data = try? JSONEncoder().encode(me) {
-            try? FileManager.default.createDirectory(at: profileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
-            try? data.write(to: profileURL, options: .atomic)
+        guard me != before else { return }
+        // Typing a name calls this on every keystroke; write the file once the typing pauses.
+        pendingProfileSave?.cancel()
+        let profile = me
+        let url = profileURL
+        let save = DispatchWorkItem {
+            guard let data = try? JSONEncoder().encode(profile) else { return }
+            try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try? data.write(to: url, options: .atomic)
         }
-        onChange?()
+        pendingProfileSave = save
+        DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 0.4, execute: save)
+        if me.hue != before.hue || me.imageData != before.imageData {
+            onChange?()
+        }
     }
 
     func setAirDropEnabled(_ enabled: Bool) {

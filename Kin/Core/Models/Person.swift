@@ -40,13 +40,6 @@ nonisolated struct Person: Identifiable, Codable, Hashable, Sendable {
         name.split(separator: " ").first.map(String.init) ?? name
     }
 
-    var eyes: [String] {
-        let letters = name.split(separator: " ").compactMap { $0.first }.map { String($0).uppercased() }
-        let first = letters.first ?? "o"
-        let second = letters.count > 1 ? letters[letters.count - 1] : first
-        return [first, second]
-    }
-
     var digits: String {
         phone.filter { $0.isNumber }
     }

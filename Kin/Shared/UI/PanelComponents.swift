@@ -1,100 +1,128 @@
 import SwiftUI
 
+// Everything here sits directly on the glass panel: no nested cards, strokes or
+// materials. Grouping comes from spacing and type, and hover gives a faint fill.
+
 struct PanelHeader: View {
     let title: String
     var onBack: (() -> Void)?
     let onClose: () -> Void
-    var onExpand: (() -> Void)?
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 6) {
             if let onBack {
-                Button(action: onBack) {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 11, weight: .bold))
-                        .foregroundStyle(.secondary)
-                        .frame(width: 26, height: 26)
-                        .background(.white.opacity(0.12), in: Circle())
-                }
-                .buttonStyle(.plain)
+                CircleButton(symbol: "chevron.left", action: onBack)
             }
             Text(title)
-                .font(.system(size: 19, weight: .bold))
+                .font(.system(size: 15, weight: .semibold))
                 .lineLimit(1)
             Spacer()
-            Button(action: onClose) {
-                Text("Esc")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(.white.opacity(0.12), in: Capsule())
-            }
-            .buttonStyle(.plain)
-            if let onExpand {
-                Button(action: onExpand) {
-                    Image(systemName: "arrow.up.left.and.arrow.down.right")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(.secondary)
-                        .frame(width: 24, height: 24)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-            }
+            CircleButton(symbol: "xmark", action: onClose)
         }
         .frame(height: 26)
     }
 }
 
-struct RingedAvatar<Badge: View>: View {
-    let person: Person
-    var size: CGFloat = 78
-    let badge: Badge
+struct CircleButton: View {
+    let symbol: String
+    let action: () -> Void
+    @State private var hovering = false
 
     var body: some View {
-        AvatarView(person: person, size: size)
-            .padding(size * 0.1)
-            .background(.white.opacity(0.08), in: Circle())
-            .overlay(Circle().strokeBorder(.white.opacity(0.3), lineWidth: 1))
-            .overlay(alignment: .topTrailing) { badge }
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: 10.5, weight: .semibold))
+                .foregroundStyle(.white.opacity(hovering ? 0.95 : 0.5))
+                .frame(width: 26, height: 26)
+                .background(.white.opacity(hovering ? 0.1 : 0), in: Circle())
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering = $0 }
+        .animation(.easeOut(duration: 0.12), value: hovering)
     }
 }
 
-struct BadgeIcon: View {
-    let symbol: String
+struct PanelSection<Content: View>: View {
+    let title: String
+    @ViewBuilder let content: Content
 
     var body: some View {
-        Image(systemName: symbol)
-            .font(.system(size: 10, weight: .bold))
-            .foregroundStyle(.white.opacity(0.85))
-            .frame(width: 24, height: 24)
-            .background(.ultraThinMaterial, in: Circle())
-            .overlay(Circle().strokeBorder(.white.opacity(0.2), lineWidth: 0.5))
-            .contentShape(Circle())
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(.tertiary)
+                .padding(.leading, 8)
+                .padding(.bottom, 2)
+            content
+        }
+    }
+}
+
+/// A full-width row that lights up faintly on hover.
+struct HoverRow<Content: View>: View {
+    var action: (() -> Void)?
+    @ViewBuilder let content: Content
+    @State private var hovering = false
+
+    var body: some View {
+        HStack(spacing: 11) {
+            content
+        }
+        .padding(.horizontal, 8)
+        .frame(height: 40)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.white.opacity(hovering && action != nil ? 0.07 : 0), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+        .contentShape(Rectangle())
+        .onTapGesture { action?() }
+        .onHover { hovering = $0 }
+        .animation(.easeOut(duration: 0.14), value: hovering)
+    }
+}
+
+struct OptionRow: View {
+    let title: String
+    let subtitle: String
+    @Binding var isOn: Bool
+    var enabled = true
+
+    var body: some View {
+        HoverRow {
+            VStack(alignment: .leading, spacing: 1) {
+                Text(title)
+                    .font(.system(size: 13))
+                Text(subtitle)
+                    .font(.system(size: 11))
+                    .foregroundStyle(.tertiary)
+                    .lineLimit(1)
+            }
+            Spacer(minLength: 8)
+            Toggle("", isOn: $isOn)
+                .labelsHidden()
+                .toggleStyle(.switch)
+                .controlSize(.mini)
+        }
+        .frame(height: 44)
+        .opacity(enabled ? 1 : 0.4)
+        .disabled(!enabled)
+        .animation(.easeOut(duration: 0.18), value: enabled)
     }
 }
 
 struct Chip: View {
     let text: String
+    @State private var hovering = false
 
     var body: some View {
         Text(text)
-            .font(.system(size: 11, weight: .semibold))
-            .foregroundStyle(.secondary)
+            .font(.system(size: 12, weight: .medium))
+            .foregroundStyle(.white.opacity(hovering ? 0.95 : 0.6))
             .lineLimit(1)
-            .padding(.horizontal, 8)
+            .padding(.horizontal, 10)
             .padding(.vertical, 4)
-            .background(.white.opacity(0.12), in: Capsule())
-    }
-}
-
-struct SectionLabel: View {
-    let text: String
-
-    var body: some View {
-        Text(text)
-            .font(.system(size: 12))
-            .foregroundStyle(.secondary)
+            .background(.white.opacity(hovering ? 0.12 : 0.06), in: Capsule())
+            .onHover { hovering = $0 }
+            .animation(.easeOut(duration: 0.12), value: hovering)
     }
 }
 
@@ -103,7 +131,7 @@ struct Caption: View {
 
     var body: some View {
         Text(text)
-            .font(.system(size: 12))
+            .font(.system(size: 11))
             .foregroundStyle(.tertiary)
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -116,15 +144,16 @@ struct SettingRow<Trailing: View>: View {
     let trailing: Trailing
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 4) {
             HStack {
                 Text(title)
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.system(size: 13))
                 Spacer()
                 trailing
             }
             Caption(text: caption)
         }
+        .padding(.horizontal, 4)
     }
 }
 
@@ -144,63 +173,22 @@ struct PillButton: View {
                         .font(.system(size: 11, weight: .semibold))
                 }
                 Text(title)
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: 13, weight: .medium))
             }
-            .foregroundStyle(destructive ? Color.red : Color.white)
+            .foregroundStyle(destructive ? Color.red.opacity(0.9) : prominent ? Color.black : Color.white.opacity(0.85))
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 10)
-            .background(prominent ? Color.accentColor.opacity(hovering ? 1 : 0.9) : Color.white.opacity(hovering ? 0.18 : 0.1), in: Capsule())
+            .frame(height: 34)
+            .background(background, in: Capsule())
             .contentShape(Capsule())
-        }
-        .buttonStyle(.plain)
-        .onHover { hovering = $0 }
-    }
-}
-
-struct DropdownRow<Icon: View>: View {
-    let title: String
-    let icon: Icon
-    let action: () -> Void
-    @State private var hovering = false
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 12) {
-                icon
-                    .frame(width: 22, height: 22)
-                Text(title)
-                    .font(.system(size: 13.5, weight: .medium))
-                    .foregroundStyle(.white.opacity(hovering ? 1 : 0.88))
-                Spacer(minLength: 0)
-            }
-            .padding(.horizontal, 12)
-            .frame(height: 38)
-            .background(.white.opacity(hovering ? 0.16 : 0), in: RoundedRectangle(cornerRadius: 13, style: .continuous))
-            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .onHover { hovering = $0 }
         .animation(.easeOut(duration: 0.12), value: hovering)
     }
-}
 
-struct DropdownSymbol: View {
-    let name: String
-
-    var body: some View {
-        Image(systemName: name)
-            .font(.system(size: 14, weight: .medium))
-            .foregroundStyle(.white.opacity(0.75))
-    }
-}
-
-struct DropdownDivider: View {
-    var body: some View {
-        Rectangle()
-            .fill(.white.opacity(0.14))
-            .frame(height: 1)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
+    private var background: Color {
+        if prominent { return .white.opacity(hovering ? 1 : 0.9) }
+        return .white.opacity(hovering ? 0.1 : 0.05)
     }
 }
 
@@ -213,11 +201,11 @@ struct HoverLabel: View {
             if nearby {
                 Circle()
                     .fill(.green)
-                    .frame(width: 7, height: 7)
+                    .frame(width: 6, height: 6)
                     .shadow(color: .green.opacity(0.8), radius: 3)
             }
             Text(text)
-                .font(.system(size: 12, weight: .semibold))
+                .font(.system(size: 12, weight: .medium))
                 .lineLimit(1)
         }
         .padding(.leading, nearby ? 9 : 11)
@@ -233,18 +221,8 @@ extension View {
         self
             .textFieldStyle(.plain)
             .font(.system(size: 13))
-            .padding(.horizontal, 16)
-            .padding(.vertical, 11)
-            .background(.white.opacity(0.1), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-    }
-
-    func dropdownSurface() -> some View {
-        let shape = RoundedRectangle(cornerRadius: 22, style: .continuous)
-        return self
-            .padding(7)
-            .background(.black.opacity(0.28), in: shape)
-            .background(.ultraThinMaterial, in: shape)
-            .overlay(shape.strokeBorder(LinearGradient(colors: [.white.opacity(0.38), .white.opacity(0.06)], startPoint: .top, endPoint: .bottom), lineWidth: 1))
-            .shadow(color: .black.opacity(0.35), radius: 28, y: 14)
+            .padding(.horizontal, 12)
+            .frame(height: 34)
+            .background(.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 }

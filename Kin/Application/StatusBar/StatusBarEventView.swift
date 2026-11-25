@@ -4,5 +4,4 @@ import Observation
 @Observable
 final class StatusBarState {
     var hovered: Int?
-    var expanded = false
 }

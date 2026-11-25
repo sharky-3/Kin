@@ -26,11 +26,6 @@ final class StatusBarController: NSObject {
         return window.convertToScreen(host.convert(host.bounds, to: nil)).maxX
     }
 
-    var settingsAnchorX: CGFloat? {
-        guard let rightEdge else { return nil }
-        return rightEdge - StatusBarMetrics.moreRightOffset
-    }
-
     init(store: PeopleStore, dropState: DropState) {
         self.store = store
         self.dropState = dropState
@@ -76,14 +71,11 @@ final class StatusBarController: NSObject {
 
     func anchorX(for slot: Int) -> CGFloat? {
         guard let rightEdge else { return nil }
-        return rightEdge - StatusBarMetrics.rightOffset(for: slot, count: count, spread: false, expanded: state.expanded)
+        return rightEdge - StatusBarMetrics.rightOffset(for: slot, count: count, spread: false)
     }
 
     func refresh() {
         if dropState.isActive {
-            if state.expanded {
-                state.expanded = false
-            }
             setHovered(nil)
         }
         item.length = StatusBarMetrics.width(for: count, spread: dropState.isActive)
@@ -92,7 +84,7 @@ final class StatusBarController: NSObject {
 
     private func screenCenter(for slot: Int) -> CGPoint? {
         guard let frame, let rightEdge else { return nil }
-        let right = StatusBarMetrics.rightOffset(for: slot, count: count, spread: dropState.isActive, expanded: state.expanded)
+        let right = StatusBarMetrics.rightOffset(for: slot, count: count, spread: dropState.isActive, target: dropState.targetIndex)
         return CGPoint(x: rightEdge - right, y: frame.midY)
     }
 
@@ -114,23 +106,9 @@ final class StatusBarController: NSObject {
     private func updateHover() {
         guard !dropState.isActive, let distance = pointerDistance else {
             setHovered(nil)
-            setExpanded(false)
             return
         }
-        let moreZone = StatusBarMetrics.padding + StatusBarMetrics.moreSpace
-        if state.expanded {
-            if distance <= moreZone + 4 {
-                setHovered(nil)
-            } else {
-                setExpanded(false)
-                setHovered(StatusBarMetrics.slot(atRight: distance, count: count, expanded: true))
-            }
-        } else if distance <= StatusBarMetrics.padding + 10 {
-            setHovered(nil)
-            setExpanded(true)
-        } else {
-            setHovered(StatusBarMetrics.slot(atRight: distance, count: count, expanded: false))
-        }
+        setHovered(StatusBarMetrics.slot(atRight: distance, count: count))
     }
 
     private func setHovered(_ slot: Int?) {
@@ -140,17 +118,10 @@ final class StatusBarController: NSObject {
         }
     }
 
-    private func setExpanded(_ expanded: Bool) {
-        guard state.expanded != expanded else { return }
-        state.expanded = expanded
-    }
-
     private func click() {
         guard !dropState.isActive, let rightEdge else { return }
         let distance = rightEdge - NSEvent.mouseLocation.x
-        if state.expanded && distance <= StatusBarMetrics.padding + StatusBarMetrics.moreSpace + 2 {
-            onOpenSettings?()
-        } else if let slot = StatusBarMetrics.slot(atRight: distance, count: count, expanded: state.expanded) {
+        if let slot = StatusBarMetrics.slot(atRight: distance, count: count) {
             onSelect?(slot)
         }
     }
@@ -167,7 +138,7 @@ final class StatusBarController: NSObject {
     private func showMenu(for event: NSEvent) {
         guard let button = item.button else { return }
         let menu = NSMenu()
-        let settings = NSMenuItem(title: "Settings…", action: #selector(openSettings), keyEquivalent: "")
+        let settings = NSMenuItem(title: "Open Kin…", action: #selector(openSettings), keyEquivalent: "")
         settings.target = self
         menu.addItem(settings)
         menu.addItem(.separator())

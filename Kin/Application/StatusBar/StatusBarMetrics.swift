@@ -5,30 +5,27 @@ enum StatusBarMetrics {
     static let padding: CGFloat = 4
     static let step: CGFloat = 15
     static let spreadStep: CGFloat = 27
-    static let more: CGFloat = 20
-    static let moreGap: CGFloat = 3
 
-    static var moreSpace: CGFloat {
-        more + moreGap
-    }
-
-    static func rightOffset(for slot: Int, count: Int, spread: Bool, expanded: Bool) -> CGFloat {
-        let extra = expanded && !spread ? moreSpace : 0
-        return padding + extra + avatar / 2 + CGFloat(count - slot) * (spread ? spreadStep : step)
-    }
-
-    static var moreRightOffset: CGFloat {
-        padding + more / 2
+    /// While dropping, avatars stay stacked and only the targeted one gets a gap on each side.
+    static func rightOffset(for slot: Int, count: Int, spread: Bool, target: Int? = nil) -> CGFloat {
+        var distance = padding + avatar / 2
+        guard slot < count else { return distance }
+        for left in slot..<count {
+            let gapped = spread && (target == left || target == left + 1)
+            distance += gapped ? spreadStep : step
+        }
+        return distance
     }
 
     static func width(for count: Int, spread: Bool) -> CGFloat {
-        let extra = spread ? 0 : moreSpace
-        return padding * 2 + extra + avatar + CGFloat(count) * (spread ? spreadStep : step)
+        // Room for the two gaps around a drop target, so the item doesn't resize while you drag across people.
+        let extra = spread ? CGFloat(min(count, 2)) * (spreadStep - step) : 0
+        return padding * 2 + extra + avatar + CGFloat(count) * step
     }
 
-    static func slot(atRight distance: CGFloat, count: Int, expanded: Bool) -> Int? {
+    static func slot(atRight distance: CGFloat, count: Int) -> Int? {
         for slot in stride(from: count, through: 0, by: -1) {
-            if abs(distance - rightOffset(for: slot, count: count, spread: false, expanded: expanded)) <= avatar / 2 + 0.5 {
+            if abs(distance - rightOffset(for: slot, count: count, spread: false)) <= avatar / 2 + 0.5 {
                 return slot
             }
         }

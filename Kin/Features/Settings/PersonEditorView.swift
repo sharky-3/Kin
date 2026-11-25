@@ -15,18 +15,17 @@ struct PersonEditorView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: 18) {
             PanelHeader(title: isNew ? "New person" : "Edit person", onBack: onBack, onClose: onClose)
-            VStack(alignment: .leading, spacing: 18) {
+            VStack(alignment: .leading, spacing: 16) {
                 identity
-                PillButton(title: "Import from Contacts", symbol: "person.crop.circle.badge.plus", action: onImport)
-                VStack(spacing: 8) {
-                        field("Name", text: $draft.name, prompt: "Full name")
-                        field("Phone", text: $draft.phone, prompt: "+386 40 123 456")
-                        field("Email", text: $draft.email, prompt: "name@example.com")
-                        field("Telegram", text: $draft.telegram, prompt: "username")
-                    }
-                SettingRow(title: "Show in menu bar", caption: canShow ? "Up to 5 people sit in the menu bar. Everyone else stays in Settings." : "The menu bar is full. Hide someone else first.", trailing: Toggle("", isOn: $draft.isShown).labelsHidden().toggleStyle(.switch).disabled(!canShow))
+                VStack(spacing: 6) {
+                    field("Name", text: $draft.name, prompt: "Full name")
+                    field("Phone", text: $draft.phone, prompt: "+386 40 123 456")
+                    field("Email", text: $draft.email, prompt: "name@example.com")
+                    field("Telegram", text: $draft.telegram, prompt: "username")
+                }
+                SettingRow(title: "Show in menu bar", caption: canShow ? "Up to 5 people sit in the menu bar. Everyone else waits in your list." : "The menu bar is full. Hide someone else first.", trailing: Toggle("", isOn: $draft.isShown).labelsHidden().toggleStyle(.switch).disabled(!canShow))
                 SettingRow(title: "Dropped files", caption: "Use the phone number with its country code so WhatsApp, Signal and Telegram can find the chat.", trailing: dropPicker)
             }
             VStack(spacing: 8) {
@@ -42,20 +41,24 @@ struct PersonEditorView: View {
 
     private var identity: some View {
         HStack(spacing: 14) {
-            RingedAvatar(person: draft, size: 56, badge: EmptyView())
+            AvatarView(person: draft, size: 52, tracks: false)
             VStack(alignment: .leading, spacing: 6) {
+                Button(action: onImport) {
+                    Chip(text: "From Contacts…")
+                }
+                .buttonStyle(.plain)
                 Button(action: choosePhoto) {
                     Chip(text: "Choose photo…")
                 }
                 .buttonStyle(.plain)
                 if draft.imageData != nil {
                     Button(action: { draft.imageData = nil }) {
-                        Chip(text: "Use face")
+                        Chip(text: "Use monster")
                     }
                     .buttonStyle(.plain)
                 } else {
-                    Button(action: { draft.hue = Double.random(in: 0...1) }) {
-                        Chip(text: "Shuffle face")
+                    Button(action: { draft.hue = Monster.shuffledHue(from: draft.hue) }) {
+                        Chip(text: "Shuffle monster")
                     }
                     .buttonStyle(.plain)
                 }

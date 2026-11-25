@@ -10,7 +10,7 @@ final class AppCoordinator {
     private let label = HoverLabelController()
     private let airdrop = AirDropNearby()
     private var hoveredSlot: Int?
-    private let settingsID = UUID()
+    private let homeID = UUID()
     private var statusBar: StatusBarController?
     private var dropPanel: DropPanelController?
 
@@ -18,7 +18,7 @@ final class AppCoordinator {
         _ = PointerTracker.shared
         let bar = StatusBarController(store: store, dropState: dropState)
         bar.onSelect = { [weak self] slot in self?.togglePanel(at: slot) }
-        bar.onOpenSettings = { [weak self] in self?.toggleSettings() }
+        bar.onOpenSettings = { [weak self] in self?.toggleHome() }
         bar.onHoverChange = { [weak self] slot in self?.showLabel(for: slot) }
         statusBar = bar
 
@@ -58,32 +58,34 @@ final class AppCoordinator {
         if store.people.isEmpty {
             Task { @MainActor [weak self] in
                 try? await Task.sleep(for: .seconds(0.8))
-                self?.openSettings(editing: nil)
+                self?.openHome(editing: nil)
             }
         }
     }
 
-    func openSettings(editing person: Person?) {
-        guard let anchor = settingsAnchor else { return }
+    /// Your own panel: profile, people, options. Optionally opens straight into editing someone.
+    func openHome(editing person: Person?) {
+        guard let anchor = homeAnchor else { return }
+        label.hide()
         if person != nil {
             panel.close()
         }
-        panel.open(id: settingsID, anchorX: anchor.x, top: anchor.y, content: settingsView(editing: person))
+        panel.open(id: homeID, anchorX: anchor.x, top: anchor.y, content: homeView(editing: person))
     }
 
-    private func toggleSettings() {
-        guard let anchor = settingsAnchor else { return }
+    private func toggleHome() {
+        guard let anchor = homeAnchor else { return }
         label.hide()
-        panel.toggle(id: settingsID, anchorX: anchor.x, top: anchor.y, content: settingsView(editing: nil))
+        panel.toggle(id: homeID, anchorX: anchor.x, top: anchor.y, content: homeView(editing: nil))
     }
 
-    private var settingsAnchor: NSPoint? {
-        guard let frame = statusBar?.frame, let x = statusBar?.settingsAnchorX else { return nil }
+    private var homeAnchor: NSPoint? {
+        guard let frame = statusBar?.frame, let x = statusBar?.anchorX(for: 0) else { return nil }
         return NSPoint(x: x, y: frame.minY)
     }
 
-    private func settingsView(editing person: Person?) -> AnyView {
-        AnyView(SettingsView(store: store, editing: person, onClose: { [weak self] in self?.panel.close() }))
+    private func homeView(editing person: Person?) -> AnyView {
+        AnyView(ProfilePanelView(store: store, editing: person, onClose: { [weak self] in self?.panel.close() }))
     }
 
     private func togglePanel(at slot: Int) {
@@ -95,13 +97,12 @@ final class AppCoordinator {
             FileSender.pickAndSend(to: person)
             return
         }
-        let close: () -> Void = { [weak self] in self?.panel.close() }
-        let view: AnyView
         if slot == 0 {
-            view = AnyView(ProfilePanelView(store: store, onClose: close, onOpenSettings: { [weak self] in self?.openSettings(editing: nil) }))
-        } else {
-            view = AnyView(PersonPanelView(store: store, chat: chat, person: person, onClose: close, onEdit: { [weak self] in self?.openSettings(editing: person) }))
+            toggleHome()
+            return
         }
+        let close: () -> Void = { [weak self] in self?.panel.close() }
+        let view = AnyView(PersonPanelView(store: store, chat: chat, person: person, onClose: close, onEdit: { [weak self] in self?.openHome(editing: person) }))
         label.hide()
         panel.toggle(id: person.id, anchorX: anchorX, top: frame.minY, content: view)
     }
